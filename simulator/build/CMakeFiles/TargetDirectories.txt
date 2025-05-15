@@ -1,0 +1,7 @@
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/Simulator.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/edit_cache.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/rebuild_cache.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/list_install_components.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/install.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/install/local.dir
+/home/rene/Documents/zavrsni/simulator/build/CMakeFiles/install/strip.dir

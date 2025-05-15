@@ -1,1 +1,1 @@
-Specialised tabu search implementation in python for the hotstorage simulator.
+Specialised tabu search implementation in python for the hotstorage simulator in cpp.
