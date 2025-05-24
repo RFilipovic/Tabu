@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/parent-classes/ContainerStack.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/parent-classes/ContainerStack.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/parent-classes/ContainerStack.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/iostream \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -172,5 +172,5 @@ CMakeFiles/Simulator.dir/src/parent-classes/ContainerStack.cpp.o: \
  /usr/include/c++/13/backward/auto_ptr.h \
  /usr/include/c++/13/pstl/glue_memory_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h

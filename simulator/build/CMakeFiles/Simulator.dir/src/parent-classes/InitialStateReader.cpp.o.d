@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/parent-classes/InitialStateReader.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/parent-classes/InitialStateReader.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/parent-classes/InitialStateReader.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/fstream \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -157,4 +157,4 @@ CMakeFiles/Simulator.dir/src/parent-classes/InitialStateReader.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/InitialStateReader.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/InitialStateReader.h

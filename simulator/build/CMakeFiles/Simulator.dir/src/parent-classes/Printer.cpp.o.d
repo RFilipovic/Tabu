@@ -1,7 +1,7 @@
 CMakeFiles/Simulator.dir/src/parent-classes/Printer.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/parent-classes/Printer.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/parent-classes/Printer.cpp \
  /usr/include/stdc-predef.h \
- /home/rene/Documents/zavrsni/simulator/headers/Printer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Printer.h \
  /usr/include/c++/13/iostream /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -160,15 +160,15 @@ CMakeFiles/Simulator.dir/src/parent-classes/Printer.cpp.o: \
  /usr/include/c++/13/bits/locale_conv.h \
  /usr/include/c++/13/bits/quoted_string.h /usr/include/c++/13/sstream \
  /usr/include/c++/13/bits/sstream.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/ParsedBuffers.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ParsedBuffers.h \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/InitialStateReader.h \
- /home/rene/Documents/zavrsni/simulator/headers/Buffer.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/SingleContainerCrane.h \
- /home/rene/Documents/zavrsni/simulator/headers/Crane.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/InitialStateReader.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Buffer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/SingleContainerCrane.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Crane.h

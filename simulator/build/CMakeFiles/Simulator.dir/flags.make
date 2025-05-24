@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/rene/Documents/zavrsni/simulator/headers
+CXX_INCLUDES = -I/home/rene/Documents/zavrsni/Tabu/simulator/headers
 
-CXX_FLAGS = -std=gnu++17
+CXX_FLAGS = -g -std=gnu++17
 

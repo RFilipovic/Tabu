@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/hot-storage/Buffer.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/hot-storage/Buffer.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/hot-storage/Buffer.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/string \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -119,8 +119,8 @@ CMakeFiles/Simulator.dir/src/hot-storage/Buffer.cpp.o: \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/Buffer.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Buffer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h

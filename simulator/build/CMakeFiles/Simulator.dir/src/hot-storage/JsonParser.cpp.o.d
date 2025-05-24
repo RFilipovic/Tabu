@@ -1,7 +1,7 @@
 CMakeFiles/Simulator.dir/src/hot-storage/JsonParser.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/hot-storage/JsonParser.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/hot-storage/JsonParser.cpp \
  /usr/include/stdc-predef.h \
- /home/rene/Documents/zavrsni/simulator/headers/ParsedBuffers.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ParsedBuffers.h \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h \
@@ -52,8 +52,8 @@ CMakeFiles/Simulator.dir/src/hot-storage/JsonParser.cpp.o: \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
  /usr/include/c++/13/bits/uses_allocator.h \
  /usr/include/c++/13/bits/uses_allocator_args.h /usr/include/c++/13/tuple \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
  /usr/include/c++/13/string /usr/include/c++/13/bits/stringfwd.h \
  /usr/include/c++/13/bits/char_traits.h \
  /usr/include/c++/13/bits/postypes.h /usr/include/c++/13/cwchar \
@@ -121,11 +121,11 @@ CMakeFiles/Simulator.dir/src/hot-storage/JsonParser.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
  /usr/include/c++/13/bits/charconv.h \
  /usr/include/c++/13/bits/basic_string.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/InitialStateReader.h \
- /home/rene/Documents/zavrsni/simulator/headers/Buffer.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h \
- /home/rene/Documents/zavrsni/simulator/headers/nlohmann/json.hpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/InitialStateReader.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Buffer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/nlohmann/json.hpp \
  /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algo.h \
  /usr/include/c++/13/bits/algorithmfwd.h \
  /usr/include/c++/13/bits/stl_heap.h \

@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/hot-storage/EntryContainerStack.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/hot-storage/EntryContainerStack.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/hot-storage/EntryContainerStack.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/iostream \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -157,12 +157,12 @@ CMakeFiles/Simulator.dir/src/hot-storage/EntryContainerStack.cpp.o: \
  /usr/include/x86_64-linux-gnu/bits/stdint-least.h \
  /usr/include/c++/13/limits /usr/include/c++/13/ctime \
  /usr/include/c++/13/bits/parse_numbers.h \
- /home/rene/Documents/zavrsni/simulator/headers/EntryContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/Buffer.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/EntryContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Buffer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h

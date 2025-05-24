@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/rolling-mill/PriorityContainer.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/rolling-mill/PriorityContainer.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/rolling-mill/PriorityContainer.cpp \
  /usr/include/stdc-predef.h /usr/include/c++/13/iostream \
  /usr/include/c++/13/bits/requires_hosted.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -150,5 +150,5 @@ CMakeFiles/Simulator.dir/src/rolling-mill/PriorityContainer.cpp.o: \
  /usr/include/c++/13/bits/basic_ios.tcc \
  /usr/include/c++/13/bits/ostream.tcc /usr/include/c++/13/istream \
  /usr/include/c++/13/bits/istream.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/PriorityContainer.h
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/PriorityContainer.h

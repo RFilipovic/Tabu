@@ -40,11 +40,26 @@ void HotStorageSimulator::runCrane(){
 
         exportStateToJson(*data, "state.json");
 
+        int result = system("python3 ../tabu-search/tabu.py");
+        if (result == -1) {
+            std::cerr << "Failed to execute Python script (system call failed)" << std::endl;
+        }
+
+        std::ifstream moveFile("bestmove.txt");
+        if (!moveFile.is_open()) {
+            std::cerr << "Error pri otvaranju bestmove.txt" << std::endl;
+            continue;
+        }
+
         int input1, input2;
-        std::cout<<"Upisite indeks stoga sa kojeg zelite uzeti kontejner: ";
-        std::cin>>input1;
-        std::cout<<"Upisite indeks stoga na koji zelite staviti kontejner: ";
-        std::cin>>input2;
+        moveFile >> input1 >> input2;
+        moveFile.close();
+
+        if (input1 == 5 && input2 == 5) {
+            std::cout << "No optimal move found, waiting..." << std::endl;
+            sleep(1); 
+            continue;
+        }
 
         if(input1 == input2){
             std::cout<<"Ne mozete premjestiti kontejner na isti stog!"<<std::endl;

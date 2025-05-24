@@ -1,5 +1,5 @@
 CMakeFiles/Simulator.dir/src/hot-storage/HotStorageSimulator.cpp.o: \
- /home/rene/Documents/zavrsni/simulator/src/hot-storage/HotStorageSimulator.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/hot-storage/HotStorageSimulator.cpp \
  /usr/include/stdc-predef.h /usr/include/unistd.h /usr/include/features.h \
  /usr/include/features-time64.h \
  /usr/include/x86_64-linux-gnu/bits/wordsize.h \
@@ -95,9 +95,9 @@ CMakeFiles/Simulator.dir/src/hot-storage/HotStorageSimulator.cpp.o: \
  /usr/include/linux/errno.h /usr/include/x86_64-linux-gnu/asm/errno.h \
  /usr/include/asm-generic/errno.h /usr/include/asm-generic/errno-base.h \
  /usr/include/x86_64-linux-gnu/bits/types/error_t.h \
- /home/rene/Documents/zavrsni/simulator/headers/HotStorageSimulator.h \
- /home/rene/Documents/zavrsni/simulator/headers/SingleContainerCrane.h \
- /home/rene/Documents/zavrsni/simulator/headers/Crane.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/HotStorageSimulator.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/SingleContainerCrane.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Crane.h \
  /usr/include/c++/13/string /usr/include/c++/13/bits/char_traits.h \
  /usr/include/c++/13/bits/allocator.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h \
@@ -146,17 +146,17 @@ CMakeFiles/Simulator.dir/src/hot-storage/HotStorageSimulator.cpp.o: \
  /usr/include/c++/13/bits/basic_string.tcc \
  /usr/include/c++/13/bits/memory_resource.h /usr/include/c++/13/cstddef \
  /usr/include/c++/13/bits/uses_allocator_args.h \
- /home/rene/Documents/zavrsni/simulator/headers/ParsedBuffers.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ParsedBuffers.h \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/stl_uninitialized.h \
  /usr/include/c++/13/bits/stl_vector.h \
  /usr/include/c++/13/bits/stl_bvector.h \
  /usr/include/c++/13/bits/vector.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h \
- /home/rene/Documents/zavrsni/simulator/headers/Container.h \
- /home/rene/Documents/zavrsni/simulator/headers/InitialStateReader.h \
- /home/rene/Documents/zavrsni/simulator/headers/Buffer.h \
- /home/rene/Documents/zavrsni/simulator/headers/ContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/headers/Printer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Container.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/InitialStateReader.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Buffer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/Printer.h \
  /usr/include/c++/13/iostream /usr/include/c++/13/ostream \
  /usr/include/c++/13/ios /usr/include/c++/13/exception \
  /usr/include/c++/13/bits/exception_ptr.h \
@@ -190,13 +190,13 @@ CMakeFiles/Simulator.dir/src/hot-storage/HotStorageSimulator.cpp.o: \
  /usr/include/c++/13/bits/locale_conv.h \
  /usr/include/c++/13/bits/quoted_string.h /usr/include/c++/13/sstream \
  /usr/include/c++/13/bits/sstream.tcc \
- /home/rene/Documents/zavrsni/simulator/headers/EntryContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/EntryContainerStack.h \
  /usr/include/c++/13/chrono \
- /home/rene/Documents/zavrsni/simulator/headers/OutGoingContainerStack.h \
- /home/rene/Documents/zavrsni/simulator/src/hot-storage/JsonParser.cpp \
- /home/rene/Documents/zavrsni/simulator/headers/ParsedBuffers.h \
- /home/rene/Documents/zavrsni/simulator/headers/UntilDueContainer.h \
- /home/rene/Documents/zavrsni/simulator/headers/nlohmann/json.hpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/OutGoingContainerStack.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/src/hot-storage/JsonParser.cpp \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/ParsedBuffers.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/UntilDueContainer.h \
+ /home/rene/Documents/zavrsni/Tabu/simulator/headers/nlohmann/json.hpp \
  /usr/include/c++/13/algorithm /usr/include/c++/13/bits/stl_algo.h \
  /usr/include/c++/13/bits/algorithmfwd.h \
  /usr/include/c++/13/bits/stl_heap.h \

@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "cppbuild",
+            "label": "Build Simulator",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-fdiagnostics-color=always",
+                "-g",
+                "-I${workspaceFolder}/simulator/headers",
+                "-I${workspaceFolder}/simulator/src/hot-storage",
+                "${workspaceFolder}/simulator/src/hot-storage/Buffer.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/EntryContainerStack.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/HotStorageSimulator.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/JsonParser.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/OutGoingContainerStack.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/ParsedBuffers.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/SingleContainerCrane.cpp",
+                "${workspaceFolder}/simulator/src/hot-storage/UntilDueContainer.cpp",
+                "${workspaceFolder}/simulator/main.cpp",
+                "-o",
+                "${workspaceFolder}/build/simulator"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": ["$gcc"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Custom build task for Hot Storage Simulator"
+        }
+    ]
+}

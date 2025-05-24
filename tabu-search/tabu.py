@@ -1,7 +1,7 @@
 import json
 import copy
-import random
 import os
+import sys
 from typing import List, Dict, Tuple
 
 class Container:
@@ -113,71 +113,109 @@ class TabuSearch:
                 best_state = new_state
 
         if best_move is None and moves:
+            print("All moves tabu - resetting tabu list")
+            self.tabu_list = []
             best_move = moves[0]
             best_state = self.apply_move(current_state, best_move)
 
         return best_move, best_state
 
+def safe_write_json(file_path: str, data):
+    """Atomically write JSON file"""
+    temp_path = file_path + ".tmp"
+    try:
+        with open(temp_path, 'w') as f:
+            json.dump(data, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, file_path)
+    except Exception as e:
+        print(f"Error writing {file_path}: {e}", file=sys.stderr)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise
 
-# File Handling Functions
-def load_state(file_path: str) -> State:
-    with open(file_path, 'r') as f:
-        data = json.load(f)
-    return State(data["stacks"], data["containers"])
+def safe_write_move(file_path: str, content: str):
+    """Atomically write move file"""
+    temp_path = file_path + ".tmp"
+    try:
+        with open(temp_path, 'w') as f:
+            f.write(content + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(temp_path, file_path)
+    except Exception as e:
+        print(f"Error writing move file: {e}", file=sys.stderr)
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        # Write safe default directly
+        with open(file_path, 'w') as f:
+            f.write("5 5\n")
+        raise
 
-def save_state(file_path: str, state: State):
-    with open(file_path, 'w') as f:
-        json.dump(state.to_dict(), f, indent=2)
-
-def save_move_txt(file_path: str, move: Tuple[str, str]):
-    with open(file_path, 'w') as f:
-        f.write(f"{move[0]} {move[1]}\n")
-
-def load_tabu_list(file_path: str) -> Dict:
-    if os.path.exists(file_path):
-        with open(file_path, 'r') as f:
-            data = json.load(f)
-            data["tabu_moves"] = [tuple(m) for m in data.get("tabu_moves", [])]
-            return data
-    return {"iterations": 0, "tabu_moves": []}
-
-def save_tabu_list(file_path: str, data: Dict):
-    data["tabu_moves"] = [list(m) for m in data["tabu_moves"]]
-    with open(file_path, 'w') as f:
-        json.dump(data, f, indent=2)
-
-
-# Main Entry Point
 def main():
-    state = load_state("state.json")
-    tabu_data = load_tabu_list("tabu_list.json")
+    try:
+        # Ensure required files exist
+        if not os.path.exists("state.json"):
+            raise FileNotFoundError("state.json missing")
+            
+        # Initialize tabu list if missing
+        if not os.path.exists("tabu_list.json"):
+            with open("tabu_list.json", 'w') as f:
+                json.dump({"iterations": 0, "tabu_moves": []}, f)
 
-    # Stop if max iterations reached
-    if tabu_data["iterations"] >= 100:
-        with open("bestmove.txt", "w") as f:
-            f.write("5 5\n")
-        return
+        # Load state
+        with open("state.json", 'r') as f:
+            state_data = json.load(f)
+        state = State(state_data["stacks"], state_data["containers"])
 
-    # Initialize dummy tabu list if first iteration and empty
-    if tabu_data["iterations"] == 0 and not tabu_data["tabu_moves"]:
-        tabu_data["tabu_moves"] = [("0", "0")] * 5
+        # Load tabu list
+        with open("tabu_list.json", 'r') as f:
+            tabu_data = json.load(f)
+        tabu_data["tabu_moves"] = [tuple(m) for m in tabu_data.get("tabu_moves", [])]
 
-    # Run one step of Tabu Search
-    ts = TabuSearch(tabu_list=tabu_data["tabu_moves"])
-    move, new_state = ts.find_best_move(state)
+        # Reset if max iterations reached
+        if tabu_data["iterations"] >= 100:
+            print("Resetting tabu list after 100 iterations")
+            tabu_data = {"iterations": 0, "tabu_moves": []}
+            safe_write_json("tabu_list.json", tabu_data)
+            safe_write_move("bestmove.txt", "5 5")
+            return
 
-    if move is not None:
-        save_move_txt("bestmove.txt", move)
-        save_state("state.json", new_state)
+        # Run Tabu Search
+        ts = TabuSearch(tabu_list=tabu_data["tabu_moves"])
+        move, new_state = ts.find_best_move(state)
 
-        # Update tabu list and iterations
-        ts.add_to_tabu(move)
-        tabu_data["tabu_moves"] = ts.tabu_list
-        tabu_data["iterations"] += 1
-        save_tabu_list("tabu_list.json", tabu_data)
-    else:
-        with open("bestmove.txt", "w") as f:
-            f.write("5 5\n")
+        if move is not None:
+            # Convert stack names to indices
+            stack_map = {"A0": 0, "B0": 1, "B1": 2, "B2": 3, "H0": 4}
+            try:
+                move_str = f"{stack_map[move[0]]} {stack_map[move[1]]}"
+            except KeyError as e:
+                print(f"Invalid stack in move: {move}", file=sys.stderr)
+                raise ValueError(f"Invalid stack name in move {move}")
+
+            # Save outputs atomically
+            safe_write_move("bestmove.txt", move_str)
+            safe_write_json("state.json", new_state.to_dict())
+            
+            # Update tabu list
+            ts.add_to_tabu(move)
+            tabu_data["tabu_moves"] = ts.tabu_list
+            tabu_data["iterations"] += 1
+            safe_write_json("tabu_list.json", tabu_data)
+        else:
+            print("No valid move found")
+            safe_write_move("bestmove.txt", "5 5")
+
+    except Exception as e:
+        print(f"Critical error in main: {e}", file=sys.stderr)
+        # Ensure we always leave valid files
+        if not os.path.exists("tabu_list.json"):
+            with open("tabu_list.json", 'w') as f:
+                json.dump({"iterations": 0, "tabu_moves": []}, f)
+        safe_write_move("bestmove.txt", "5 5")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
