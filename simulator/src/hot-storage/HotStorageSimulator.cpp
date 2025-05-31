@@ -19,7 +19,8 @@ void HotStorageSimulator::runEntryStack(){
 
     while (1)
     {
-        entryStack->startAutoAddContainers(1, 5);
+        //svakih 5 sekundi dodaje 1 kontejner na dolazni stog
+        entryStack->startAutoAddContainers(1, 0);
     }
 }
 
@@ -57,8 +58,7 @@ void HotStorageSimulator::runCrane(){
 
         if (input1 == 5 && input2 == 5) {
             std::cout << "No optimal move found, waiting..." << std::endl;
-            sleep(1); 
-            continue;
+            std::exit(0);
         }
 
         if(input1 == input2){
