@@ -27,6 +27,8 @@ class State:
         self.stacks = stacks
         self.containers = {}
         self.stack_contents = {stack: [] for stack in stacks}
+        self.last_moved_container = None  # Track ID of last moved container
+        self.last_move_destination = None  # Track where it was moved (e.g., "A2")
         
         for container in containers:
             cont_obj = Container(container["id"], container["minutes"], container["seconds"])
@@ -121,8 +123,8 @@ class TabuSearch:
     def evaluate_state(self, state: State) -> int:
         # Parse crane operation times
         times = parse_ulaz_times()
-        CLEARING = times.get("clear", 5)
-        MOVE = times.get("move", 1)
+        CLEARING = times.get("clear", 0)
+        MOVE = times.get("move", 0)
         LIFT = times.get("lift", 0)
         LOWER = times.get("lower", 0)
         
@@ -132,6 +134,18 @@ class TabuSearch:
         if not all_containers:
             return 0
 
+        # ===== NEW: Check for overdue containers on top of stacks =====
+        top_overdue_containers = []
+        for stack, containers in state.stack_contents.items():
+            if containers and containers[-1].total_seconds() < 0:  # Check top container
+                top_overdue_containers.append(containers[-1])
+        
+        # If any overdue containers are immediately accessible, prioritize them above all else
+        if top_overdue_containers:
+            most_overdue = min(top_overdue_containers, key=lambda c: c.total_seconds())
+            # Return an extremely low cost to force picking this move
+            return -100_000_000 - abs(most_overdue.total_seconds())
+
         # Sort containers: overdue first (most negative first), then urgent
         sorted_containers = sorted(
             all_containers,
@@ -139,68 +153,71 @@ class TabuSearch:
         )
         most_urgent = sorted_containers[0]
 
-        # Stack distances to H0 (in crane moves)
-        stack_dist = {"A0": 4, "B0": 3, "B1": 2, "B2": 1, "H0": 0}
-        
+        # Check if any containers are overdue (for later use)
+        has_overdue = any(c.total_seconds() < 0 for c in sorted_containers)
+
         for i, container in enumerate(sorted_containers):
             stack = state.get_container_position(container.id)
-            stack_containers = state.stack_contents[stack]
-            
-            # Skip containers in H0 that are processed
+            stack_containers = state.stack_contents.get(stack, [])
+
+            # Skip containers already in H0
             if stack == "H0":
-                # Bonus for having containers ready to ship
                 if container.total_seconds() <= 60:
-                    total_cost -= 100000 * (len(sorted_containers) - i)
+                    total_cost -= 100000 * (len(sorted_containers) - i)  # Reward ready-to-ship
                 continue
                 
+            # Penalize redundant moves
+            if (state.last_moved_container == container.id and 
+                stack != "H0" and 
+                state.last_move_destination != "H0"):
+                total_cost += 10_000_000_000  # Impossible to choose this state
+                continue
+
+            # Count blocking containers
             try:
                 idx = [c.id for c in stack_containers].index(container.id)
                 blockers = len(stack_containers) - idx - 1
             except ValueError:
                 blockers = 0
                 
-            # Calculate time to ship this container (in seconds)
-            time_to_ship = (
-                blockers * (2*CLEARING + 2*MOVE + LIFT + LOWER) +  # Clear blockers
-                stack_dist[stack] * MOVE +  # Move to stack
-                CLEARING + LIFT +  # Lift container
-                stack_dist[stack] * MOVE +  # Move to H0
-                CLEARING + LOWER    # Lower at H0
-            )
-            
-            # CRITICAL: Overdue container handling
+            time_to_ship = blockers * (2*CLEARING + LIFT + LOWER + MOVE)
+
+            # ===== NEW: Reward moves that expose overdue containers =====
+            # Check if moving this container would reveal an overdue one
+            reveal_overdue_bonus = 0
+            if blockers > 0:  # If this container is blocking others
+                blocked_containers = stack_containers[idx+1:]
+                for blocked in blocked_containers:
+                    if blocked.total_seconds() < 0:
+                        # The more overdue and the closer to being uncovered, the bigger the reward
+                        reveal_overdue_bonus -= 1_000_000 * (len(blocked_containers) - blocked_containers.index(blocked))
+                        break  # Reward for the first overdue found
+
             if container.total_seconds() < 0:
-                # Extreme penalty for overdue containers not in H0
                 lateness = abs(container.total_seconds()) + time_to_ship
-                cost = 1000000 * lateness
+                cost = 10_000_000 * lateness + reveal_overdue_bonus
             else:
-                # For non-overdue, focus on risk of becoming overdue
                 time_left = container.total_seconds()
                 risk_factor = max(0, time_left - time_to_ship)
-                
-                # High risk if < 30 seconds buffer
-                if risk_factor < 30:
-                    cost = 500000 / (1 + risk_factor)
-                else:
-                    # Normal priority based on position
-                    cost = (len(sorted_containers) - i) * 1000
-            
-            # Additional blocker penalty (exponential)
-            cost += (2 ** blockers) * 5000
+                cost = 500_000 / (1 + risk_factor) if risk_factor < 30 else (len(sorted_containers) - i) * 1000
+                cost += (2 ** blockers) * 5000 + reveal_overdue_bonus
             
             total_cost += cost
-        
-        # Global optimization penalties
+
+        # Global optimizations
         h0_containers = state.stack_contents.get("H0", [])
         h0_count = len(h0_containers)
         
-        # Severe penalty for multiple containers in H0
-        if h0_count > 1:
-            total_cost += 1000000 * h0_count
-            
-        # Reward having the most urgent container in H0
+        if has_overdue:
+            if h0_count > 1:
+                total_cost += 100_000 * h0_count  # Reduced penalty
+        else:
+            if h0_count > 1:
+                total_cost += 1_000_000 * h0_count
+                
+        # Special reward if most urgent container is in H0
         if h0_count == 1 and h0_containers[0].id == most_urgent.id:
-            total_cost -= 500000
+            total_cost -= 500_000  # Reward most urgent in H0
             
         return int(total_cost)
 
@@ -235,6 +252,23 @@ class TabuSearch:
             self.tabu_list.pop(0)
 
     def find_best_move(self, current_state: State) -> Tuple[Tuple[str, str], State]:
+        # First check for immediately accessible overdue containers
+        for stack in current_state.stack_contents:
+            if stack == "H0":
+                continue  # Skip H0 itself
+                
+            containers = current_state.stack_contents[stack]
+            if containers and containers[-1].total_seconds() < 0:
+                # Found overdue container on top - move it to H0 immediately
+                move = (stack, "H0")
+                if not self.is_tabu(move):
+                    return move, self.apply_move(current_state, move)
+                else:
+                    print(f"Overdue move {move} is tabu - making exception")
+                    self.tabu_list.remove(move)  # Force allow this critical move
+                    return move, self.apply_move(current_state, move)
+
+        # If no overdue containers on top, proceed with normal move evaluation
         moves = self.generate_moves(current_state)
         best_move = None
         best_state = None
