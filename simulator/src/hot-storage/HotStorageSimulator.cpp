@@ -20,7 +20,7 @@ void HotStorageSimulator::runEntryStack(){
     while (1)
     {
         //svakih 5 sekundi dodaje 1 kontejner na dolazni stog
-        entryStack->startAutoAddContainers(1, 0);
+        entryStack->startAutoAddContainers(1, 10);
     }
 }
 
@@ -150,5 +150,5 @@ void HotStorageSimulator::simulate(){
 
     entryStack.join();
     crane.join();
-    
+    outgoingStack.join();    
 }
