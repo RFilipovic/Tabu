@@ -28,8 +28,11 @@ class State:
         self.containers = {}
         self.stack_contents = {stack: [] for stack in stacks}
         self.last_moved_container = None
-        self.last_move_destination = None
         self.late_containers = set()
+        
+        # Load the last moved container if it exists in state data
+        if isinstance(containers, dict) and "last_moved_container" in containers:
+            self.last_moved_container = containers["last_moved_container"]
         
         for container in containers:
             cont_obj = Container(container["id"], container["minutes"], container["seconds"])
@@ -63,7 +66,8 @@ class State:
                 })
         return {
             "stacks": self.stacks,
-            "containers": containers
+            "containers": containers,
+            "last_moved_container": self.last_moved_container  # Add this line
         }
 
 class TabuSearch:
@@ -172,9 +176,11 @@ class TabuSearch:
                 continue
             containers = current_state.stack_contents[stack]
             if containers and containers[-1].total_seconds() < 0:
-                move = (stack, "H0")
-                self.last_moved_container = containers[-1].id
-                return move, self.apply_move(current_state, move)
+                top_container = containers[-1]
+                if top_container.id != self.last_moved_container:  # Check if it's not the same container
+                    move = (stack, "H0")
+                    self.last_moved_container = top_container.id
+                    return move, self.apply_move(current_state, move)
 
         moves = self.generate_random_moves(current_state, num_moves=5)
         best_move = None
@@ -183,20 +189,36 @@ class TabuSearch:
 
         for move in moves:
             if not self.is_tabu(move):
-                new_state = self.apply_move(current_state, move)
-                score = self.look_ahead(new_state, self.look_ahead_depth)
-                if score < best_score:
-                    best_score = score
-                    best_move = move
-                    best_state = new_state
+                # Check if we're trying to move the same container
+                from_stack = move[0]
+                top_container = current_state.stack_contents[from_stack][-1]
+                if top_container.id != self.last_moved_container:  # Add this check
+                    new_state = self.apply_move(current_state, move)
+                    score = self.look_ahead(new_state, self.look_ahead_depth)
+                    if score < best_score:
+                        best_score = score
+                        best_move = move
+                        best_state = new_state
 
         if best_move is None and moves:
             non_tabu_moves = [m for m in moves if not self.is_tabu(m)]
-            if non_tabu_moves:
-                best_move = random.choice(non_tabu_moves)
+            valid_moves = []
+            
+            # Filter moves that would move the same container
+            for move in non_tabu_moves:
+                from_stack = move[0]
+                top_container = current_state.stack_contents[from_stack][-1]
+                if top_container.id != self.last_moved_container:
+                    valid_moves.append(move)
+                    
+            if valid_moves:
+                best_move = random.choice(valid_moves)
             else:
+                # If no valid moves, clear everything and try again
                 self.tabu_list.clear()
+                self.last_moved_container = None
                 best_move = random.choice(moves)
+                
             best_state = self.apply_move(current_state, best_move)
 
         if best_move:
@@ -272,12 +294,6 @@ def main():
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
 
-        # Initialize or load late containers tracking
-        late_containers_file = "late_containers.json"
-        if not os.path.exists(late_containers_file):
-            with open(late_containers_file, 'w') as f:
-                json.dump({"total_late": [], "count": 0}, f)
-
         with open("state.json", 'r') as f:
             state_data = json.load(f)
         state = State(state_data["stacks"], state_data["containers"])
@@ -286,15 +302,8 @@ def main():
             tabu_data = json.load(f)
         tabu_data["tabu_moves"] = [tuple(m) for m in tabu_data.get("tabu_moves", [])]
 
-        # Load total late containers
-        with open(late_containers_file, 'r') as f:
-            late_data = json.load(f)
-            total_late = set(late_data["total_late"])
-
         if tabu_data["iterations"] >= 100:
             print("Resetting tabu list after 100 iterations")
-            print(f"Total containers that were late: {len(total_late)}")
-            print(f"Container IDs that were late: {sorted(list(total_late))}")
             tabu_data = {"iterations": 0, "tabu_moves": []}
             safe_write_json("tabu_list.json", tabu_data)
             safe_write_move("bestmove.txt", "5 5")
@@ -312,13 +321,7 @@ def main():
                 raise ValueError(f"Invalid stack name in move {move}")
 
             safe_write_move("bestmove.txt", move_str)
-            
-            # Update total late containers
-            total_late.update(new_state.late_containers)
-            late_data["total_late"] = list(total_late)
-            late_data["count"] = len(total_late)
-            safe_write_json(late_containers_file, late_data)
-            
+            print(f"Number of containers that were late: {len(new_state.late_containers)}")
             safe_write_json("state.json", new_state.to_dict())
             
             ts.add_to_tabu(move)
@@ -327,8 +330,6 @@ def main():
             safe_write_json("tabu_list.json", tabu_data)
         else:
             print("No valid move found")
-            print(f"Total containers that were late: {len(total_late)}")
-            print(f"Container IDs that were late: {sorted(list(total_late))}")
             safe_write_move("bestmove.txt", "5 5")
 
     except Exception as e:
