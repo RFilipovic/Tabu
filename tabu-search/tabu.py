@@ -27,8 +27,8 @@ class State:
         self.stacks = stacks
         self.containers = {}
         self.stack_contents = {stack: [] for stack in stacks}
-        self.last_moved_container = None  # Track ID of last moved container
-        self.last_move_destination = None  # Track where it was moved (e.g., "A2")
+        self.last_moved_container = None
+        self.last_move_destination = None
         
         for container in containers:
             cont_obj = Container(container["id"], container["minutes"], container["seconds"])
@@ -60,172 +60,52 @@ class TabuSearch:
     def __init__(self, tabu_list: List[Tuple[str, str]], tabu_size: int = 5):
         self.tabu_size = tabu_size
         self.tabu_list = tabu_list
+        self.look_ahead_depth = 2
+        self.last_moved_container = None
 
-        
-    """Heuristic report written to heuristic_report.json with overall grade 60.38"""
-    """def evaluate_state(self, state: State) -> int:
-        total_cost = 0
-        
-        # First, sort containers by urgency with special handling for negative times
-        all_containers = list(state.containers.values())
-        if not all_containers:
-            return 0
-            
-        # Sort containers by:
-        # 1. Negative status (expired containers first)
-        # 2. Within expired containers, most expired first (smallest negative number)
-        # 3. For positive times, smallest time first
-        sorted_containers = sorted(all_containers, 
-            key=lambda c: (c.total_seconds() >= 0, 
-                        c.total_seconds() if c.total_seconds() >= 0 else -c.total_seconds()))
-        
-        # Calculate cost based on how many containers are blocking the most urgent ones
-        for i, container in enumerate(sorted_containers):
-            stack = state.get_container_position(container.id)
-            if stack == "H0":
-                continue  # already in hand, no cost
-                
-            # Find how many containers are above this one in its stack
-            stack_containers = state.stack_contents[stack]
-            try:
-                index = [c.id for c in stack_containers].index(container.id)
-                blocking_containers = len(stack_containers) - index - 1
-            except ValueError:
-                blocking_containers = 0
-                
-            # Calculate urgency weight
-            if container.total_seconds() < 0:
-                # Expired containers get maximum priority
-                # The more negative, the higher the priority
-                urgency_weight = 1000 - container.total_seconds()
-            else:
-                # For non-expired containers, use their position in the sorted list
-                urgency_weight = len(sorted_containers) - i
-                
-            total_cost += blocking_containers * urgency_weight * 10
-            
-            # Additional penalty for not being in H0
-            if stack != "H0":
-                total_cost += 5 * urgency_weight
-                
-        return total_cost"""
-        
-    """Heuristic report written to heuristic_report.json with overall grade 49.87"""
-    """def evaluate_state(self, state: State) -> int:
-        total = 0
-        for container in state.containers.values():
-            total += container.total_seconds()
-        for stack, containers in state.stack_contents.items():
-            if stack != "H0":
-                total += len(containers) * 10
-        return total"""
-        
     def evaluate_state(self, state: State) -> int:
-        # Parse crane operation times
-        times = parse_ulaz_times()
-        CLEARING = times.get("clear", 0)
-        MOVE = times.get("move", 0)
-        LIFT = times.get("lift", 0)
-        LOWER = times.get("lower", 0)
-        
         total_cost = 0
         all_containers = list(state.containers.values())
-        
         if not all_containers:
             return 0
 
-        # ===== NEW: Check for overdue containers on top of stacks =====
-        top_overdue_containers = []
-        for stack, containers in state.stack_contents.items():
-            if containers and containers[-1].total_seconds() < 0:  # Check top container
-                top_overdue_containers.append(containers[-1])
+        h0_containers = len(state.stack_contents.get("H0", []))
+        middle_containers = sum(len(state.stack_contents.get(s, [])) 
+                            for s in ["A0", "B0", "B1", "B2"])
         
-        # If any overdue containers are immediately accessible, prioritize them above all else
-        if top_overdue_containers:
-            most_overdue = min(top_overdue_containers, key=lambda c: c.total_seconds())
-            # Return an extremely low cost to force picking this move
-            return -100_000_000 - abs(most_overdue.total_seconds())
+        for stack_name, containers in state.stack_contents.items():
+            if stack_name in ["A0", "B0", "B1", "B2"]:
+                for depth, container in enumerate(containers):
+                    containers_above = len(containers) - depth - 1
+    
+                    if container.total_seconds() > 0:
+                        burial_penalty = (1 / container.total_seconds()) * (containers_above + 1) * 1000
+                        total_cost += int(burial_penalty)
+                    else:
+                        total_cost += 50000 * (containers_above + 1)
 
-        # Sort containers: overdue first (most negative first), then urgent
-        sorted_containers = sorted(
-            all_containers,
-            key=lambda c: (c.total_seconds() < 0, c.total_seconds())
-        )
-        most_urgent = sorted_containers[0]
-
-        # Check if any containers are overdue (for later use)
-        has_overdue = any(c.total_seconds() < 0 for c in sorted_containers)
-
-        for i, container in enumerate(sorted_containers):
-            stack = state.get_container_position(container.id)
-            stack_containers = state.stack_contents.get(stack, [])
-
-            # Skip containers already in H0
-            if stack == "H0":
-                if container.total_seconds() <= 60:
-                    total_cost -= 100000 * (len(sorted_containers) - i)  # Reward ready-to-ship
-                continue
-                
-            # Penalize redundant moves
-            if (state.last_moved_container == container.id and 
-                stack != "H0" and 
-                state.last_move_destination != "H0"):
-                total_cost += 10_000_000_000  # Impossible to choose this state
-                continue
-
-            # Count blocking containers
-            try:
-                idx = [c.id for c in stack_containers].index(container.id)
-                blockers = len(stack_containers) - idx - 1
-            except ValueError:
-                blockers = 0
-                
-            time_to_ship = blockers * (2*CLEARING + LIFT + LOWER + MOVE)
-
-            # ===== NEW: Reward moves that expose overdue containers =====
-            # Check if moving this container would reveal an overdue one
-            reveal_overdue_bonus = 0
-            if blockers > 0:  # If this container is blocking others
-                blocked_containers = stack_containers[idx+1:]
-                for blocked in blocked_containers:
-                    if blocked.total_seconds() < 0:
-                        # The more overdue and the closer to being uncovered, the bigger the reward
-                        reveal_overdue_bonus -= 1_000_000 * (len(blocked_containers) - blocked_containers.index(blocked))
-                        break  # Reward for the first overdue found
-
-            if container.total_seconds() < 0:
-                lateness = abs(container.total_seconds()) + time_to_ship
-                cost = 10_000_000 * lateness + reveal_overdue_bonus
-            else:
-                time_left = container.total_seconds()
-                risk_factor = max(0, time_left - time_to_ship)
-                cost = 500_000 / (1 + risk_factor) if risk_factor < 30 else (len(sorted_containers) - i) * 1000
-                cost += (2 ** blockers) * 5000 + reveal_overdue_bonus
-            
-            total_cost += cost
-
-        # Global optimizations
-        h0_containers = state.stack_contents.get("H0", [])
-        h0_count = len(h0_containers)
+        overdue_count = sum(1 for c in all_containers if c.total_seconds() < 0)
+        blocked_overdue = sum(1 for c in all_containers 
+                            if c.total_seconds() < 0 
+                            and state.get_container_position(c.id) != "H0")
         
-        if has_overdue:
-            if h0_count > 1:
-                total_cost += 100_000 * h0_count  # Reduced penalty
-        else:
-            if h0_count > 1:
-                total_cost += 1_000_000 * h0_count
-                
-        # Special reward if most urgent container is in H0
-        if h0_count == 1 and h0_containers[0].id == most_urgent.id:
-            total_cost -= 500_000  # Reward most urgent in H0
-            
-        return int(total_cost)
+        total_cost += middle_containers * 1000
+        total_cost -= h0_containers * 2000
+        total_cost += overdue_count * 5000
+        total_cost += blocked_overdue * 10000
+        
+        return total_cost
 
     def generate_moves(self, state: State) -> List[Tuple[str, str]]:
         moves = []
         for from_stack in state.stacks:
             if from_stack == "H0" or not state.stack_contents[from_stack]:
                 continue
+            
+            top_container = state.stack_contents[from_stack][-1]
+            if top_container.id == state.last_moved_container:
+                continue
+                
             for to_stack in state.stacks:
                 if to_stack == "A0" or from_stack == to_stack:
                     continue
@@ -234,6 +114,29 @@ class TabuSearch:
                 moves.append((from_stack, to_stack))
         return moves
 
+    def generate_random_moves(self, state: State, num_moves: int = 3) -> List[Tuple[str, str]]:
+        all_moves = self.generate_moves(state)
+        if not all_moves:
+            return []
+        return random.sample(all_moves, min(num_moves, len(all_moves)))
+
+    def look_ahead(self, state: State, depth: int) -> int:
+        if depth == 0:
+            return self.evaluate_state(state)
+
+        moves = self.generate_random_moves(state)
+        if not moves:
+            return self.evaluate_state(state)
+
+        scores = []
+        for move in moves:
+            if not self.is_tabu(move):
+                new_state = self.apply_move(state, move)
+                score = self.look_ahead(new_state, depth - 1)
+                scores.append(score)
+
+        return min(scores) if scores else self.evaluate_state(state)
+
     def apply_move(self, state: State, move: Tuple[str, str]) -> State:
         from_stack, to_stack = move
         new_state = copy.deepcopy(state)
@@ -241,6 +144,7 @@ class TabuSearch:
             container = new_state.stack_contents[from_stack][-1]
             new_state.stack_contents[from_stack].pop()
             new_state.stack_contents[to_stack].append(container)
+            new_state.last_moved_container = container.id
         return new_state
 
     def is_tabu(self, move: Tuple[str, str]) -> bool:
@@ -252,46 +156,44 @@ class TabuSearch:
             self.tabu_list.pop(0)
 
     def find_best_move(self, current_state: State) -> Tuple[Tuple[str, str], State]:
-        # First check for immediately accessible overdue containers
         for stack in current_state.stack_contents:
             if stack == "H0":
-                continue  # Skip H0 itself
-                
+                continue
             containers = current_state.stack_contents[stack]
             if containers and containers[-1].total_seconds() < 0:
-                # Found overdue container on top - move it to H0 immediately
                 move = (stack, "H0")
-                if not self.is_tabu(move):
-                    return move, self.apply_move(current_state, move)
-                else:
-                    print(f"Overdue move {move} is tabu - making exception")
-                    self.tabu_list.remove(move)  # Force allow this critical move
-                    return move, self.apply_move(current_state, move)
+                self.last_moved_container = containers[-1].id
+                return move, self.apply_move(current_state, move)
 
-        # If no overdue containers on top, proceed with normal move evaluation
-        moves = self.generate_moves(current_state)
+        moves = self.generate_random_moves(current_state, num_moves=5)
         best_move = None
         best_state = None
         best_score = float('inf')
 
         for move in moves:
-            if self.is_tabu(move):
-                continue
-            new_state = self.apply_move(current_state, move)
-            score = self.evaluate_state(new_state)
-            if score < best_score:
-                best_score = score
-                best_move = move
-                best_state = new_state
+            if not self.is_tabu(move):
+                new_state = self.apply_move(current_state, move)
+                score = self.look_ahead(new_state, self.look_ahead_depth)
+                if score < best_score:
+                    best_score = score
+                    best_move = move
+                    best_state = new_state
 
         if best_move is None and moves:
-            print("All moves tabu - resetting tabu list")
-            self.tabu_list = []
-            best_move = moves[0]
+            non_tabu_moves = [m for m in moves if not self.is_tabu(m)]
+            if non_tabu_moves:
+                best_move = random.choice(non_tabu_moves)
+            else:
+                self.tabu_list.clear()
+                best_move = random.choice(moves)
             best_state = self.apply_move(current_state, best_move)
 
-        return best_move, best_state
+        if best_move:
+            from_stack = best_move[0]
+            self.last_moved_container = current_state.stack_contents[from_stack][-1].id
 
+        return best_move, best_state
+    
 def safe_write_json(file_path: str, data):
     """Atomically write JSON file"""
     temp_path = file_path + ".tmp"
@@ -350,79 +252,6 @@ def safe_write_move(file_path: str, content: str):
         with open(file_path, 'w') as f:
             f.write("5 5\n")
         raise
-    
-def grade_heuristic(ts_class, state_class, num_tests=10):
-    """
-    Grades the heuristic by evaluating a set of test states.
-    Normalizes each batch of scores to 0-100, accumulates batch averages,
-    and reports the overall average grade.
-    """
-    import os
-
-    stacks = ["A0", "B0", "B1", "B2", "H0"]
-    grades = []
-    details = []
-
-    for i in range(num_tests):
-        containers = []
-        for cid in range(5):
-            minutes = random.randint(-5, 10)
-            seconds = random.randint(0, 59)
-            stack = random.choice(stacks[:-1])
-            containers.append({
-                "id": f"C{cid}",
-                "stack": stack,
-                "minutes": minutes,
-                "seconds": seconds
-            })
-        containers.append({
-            "id": "C_opt",
-            "stack": "H0",
-            "minutes": 0,
-            "seconds": 0
-        })
-
-        state = state_class(stacks, containers)
-        ts = ts_class([])
-        score = ts.evaluate_state(state)
-        details.append({"test": i, "score": score, "containers": containers})
-        grades.append(score)
-
-    # Normalize current batch of scores to 0-100
-    min_score = min(grades)
-    max_score = max(grades)
-    if max_score == min_score:
-        normalized_scores = [100 for _ in grades]
-    else:
-        normalized_scores = [
-            int(100 * (max_score - s) / (max_score - min_score)) for s in grades
-        ]
-    batch_average = sum(normalized_scores) / len(normalized_scores)
-
-    # Accumulate batch averages
-    averages_file = "heuristic_normalized_averages.json"
-    if os.path.exists(averages_file):
-        with open(averages_file, "r") as f:
-            all_averages = json.load(f)
-    else:
-        all_averages = []
-
-    all_averages.append(batch_average)
-    with open(averages_file, "w") as f:
-        json.dump(all_averages, f, indent=2)
-
-    overall_grade = sum(all_averages) / len(all_averages) if all_averages else 0
-
-    report = {
-        "overall_grade": overall_grade,
-        "last_batch_average": batch_average,
-        "normalized_scores": normalized_scores,
-        "test_details": details,
-        "total_batches": len(all_averages)
-    }
-    with open("heuristic_report.json", "w") as f:
-        json.dump(report, f, indent=2)
-    print(f"Heuristic report written to heuristic_report.json with overall grade {overall_grade:.2f}")
     
 def main():
     try:
@@ -490,4 +319,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    grade_heuristic(TabuSearch, State)
