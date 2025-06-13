@@ -29,17 +29,27 @@ class State:
         self.stack_contents = {stack: [] for stack in stacks}
         self.last_moved_container = None
         self.last_move_destination = None
+        self.late_containers = set()
         
         for container in containers:
             cont_obj = Container(container["id"], container["minutes"], container["seconds"])
             self.containers[container["id"]] = cont_obj
             self.stack_contents[container["stack"]].append(cont_obj)
+            if cont_obj.total_seconds() < 0 and container["stack"] != "H0":
+                self.late_containers.add(cont_obj.id)
     
     def get_container_position(self, container_id: str) -> str:
         for stack, containers in self.stack_contents.items():
             if any(c.id == container_id for c in containers):
                 return stack
         return None
+
+    def update_late_containers(self):
+        for stack_name, containers in self.stack_contents.items():
+            if stack_name != "H0":
+                for container in containers:
+                    if container.total_seconds() < 0:
+                        self.late_containers.add(container.id)
     
     def to_dict(self) -> Dict:
         containers = []
@@ -145,6 +155,7 @@ class TabuSearch:
             new_state.stack_contents[from_stack].pop()
             new_state.stack_contents[to_stack].append(container)
             new_state.last_moved_container = container.id
+            new_state.update_late_containers()
         return new_state
 
     def is_tabu(self, move: Tuple[str, str]) -> bool:
@@ -248,46 +259,51 @@ def safe_write_move(file_path: str, content: str):
         print(f"Error writing move file: {e}", file=sys.stderr)
         if os.path.exists(temp_path):
             os.remove(temp_path)
-        # Write safe default directly
         with open(file_path, 'w') as f:
             f.write("5 5\n")
         raise
     
 def main():
     try:
-        # Ensure required files exist
         if not os.path.exists("state.json"):
             raise FileNotFoundError("state.json missing")
             
-        # Initialize tabu list if missing
         if not os.path.exists("tabu_list.json"):
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
 
-        # Load state
+        # Initialize or load late containers tracking
+        late_containers_file = "late_containers.json"
+        if not os.path.exists(late_containers_file):
+            with open(late_containers_file, 'w') as f:
+                json.dump({"total_late": [], "count": 0}, f)
+
         with open("state.json", 'r') as f:
             state_data = json.load(f)
         state = State(state_data["stacks"], state_data["containers"])
 
-        # Load tabu list
         with open("tabu_list.json", 'r') as f:
             tabu_data = json.load(f)
         tabu_data["tabu_moves"] = [tuple(m) for m in tabu_data.get("tabu_moves", [])]
 
-        # Reset if max iterations reached
+        # Load total late containers
+        with open(late_containers_file, 'r') as f:
+            late_data = json.load(f)
+            total_late = set(late_data["total_late"])
+
         if tabu_data["iterations"] >= 100:
             print("Resetting tabu list after 100 iterations")
+            print(f"Total containers that were late: {len(total_late)}")
+            print(f"Container IDs that were late: {sorted(list(total_late))}")
             tabu_data = {"iterations": 0, "tabu_moves": []}
             safe_write_json("tabu_list.json", tabu_data)
             safe_write_move("bestmove.txt", "5 5")
             return
 
-        # Run Tabu Search
         ts = TabuSearch(tabu_list=tabu_data["tabu_moves"])
         move, new_state = ts.find_best_move(state)
 
         if move is not None:
-            # Convert stack names to indices
             stack_map = {"A0": 0, "B0": 1, "B1": 2, "B2": 3, "H0": 4}
             try:
                 move_str = f"{stack_map[move[0]]} {stack_map[move[1]]}"
@@ -295,22 +311,28 @@ def main():
                 print(f"Invalid stack in move: {move}", file=sys.stderr)
                 raise ValueError(f"Invalid stack name in move {move}")
 
-            # Save outputs atomically
             safe_write_move("bestmove.txt", move_str)
+            
+            # Update total late containers
+            total_late.update(new_state.late_containers)
+            late_data["total_late"] = list(total_late)
+            late_data["count"] = len(total_late)
+            safe_write_json(late_containers_file, late_data)
+            
             safe_write_json("state.json", new_state.to_dict())
             
-            # Update tabu list
             ts.add_to_tabu(move)
             tabu_data["tabu_moves"] = ts.tabu_list
             tabu_data["iterations"] += 1
             safe_write_json("tabu_list.json", tabu_data)
         else:
             print("No valid move found")
+            print(f"Total containers that were late: {len(total_late)}")
+            print(f"Container IDs that were late: {sorted(list(total_late))}")
             safe_write_move("bestmove.txt", "5 5")
 
     except Exception as e:
         print(f"Critical error in main: {e}", file=sys.stderr)
-        # Ensure we always leave valid files
         if not os.path.exists("tabu_list.json"):
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
