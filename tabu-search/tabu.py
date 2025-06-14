@@ -294,6 +294,15 @@ def main():
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
 
+        # Load existing late containers data or create new
+        if os.path.exists("late_containers.json"):
+            with open("late_containers.json", 'r') as f:
+                late_info = json.load(f)
+                existing_late = set(late_info.get("containers", []))
+        else:
+            late_info = {"count": 0, "containers": []}
+            existing_late = set()
+
         with open("state.json", 'r') as f:
             state_data = json.load(f)
         state = State(state_data["stacks"], state_data["containers"])
@@ -302,8 +311,18 @@ def main():
             tabu_data = json.load(f)
         tabu_data["tabu_moves"] = [tuple(m) for m in tabu_data.get("tabu_moves", [])]
 
+        # Add any new late containers to existing ones
+        existing_late.update(state.late_containers)
+        late_info = {
+            "count": len(existing_late),
+            "containers": sorted(list(existing_late))
+        }
+        safe_write_json("late_containers.json", late_info)
+
         if tabu_data["iterations"] >= 100:
             print("Resetting tabu list after 100 iterations")
+            print(f"Total containers that were late: {len(existing_late)}")
+            print(f"Late container IDs: {sorted(list(existing_late))}")
             tabu_data = {"iterations": 0, "tabu_moves": []}
             safe_write_json("tabu_list.json", tabu_data)
             safe_write_move("bestmove.txt", "5 5")
@@ -321,7 +340,16 @@ def main():
                 raise ValueError(f"Invalid stack name in move {move}")
 
             safe_write_move("bestmove.txt", move_str)
-            print(f"Number of containers that were late: {len(new_state.late_containers)}")
+            
+            # Update late containers by adding new ones to existing set
+            existing_late.update(new_state.late_containers)
+            late_info = {
+                "count": len(existing_late),
+                "containers": sorted(list(existing_late))
+            }
+            safe_write_json("late_containers.json", late_info)
+            
+            print(f"Total containers that have been late: {len(existing_late)}")
             safe_write_json("state.json", new_state.to_dict())
             
             ts.add_to_tabu(move)
@@ -330,6 +358,8 @@ def main():
             safe_write_json("tabu_list.json", tabu_data)
         else:
             print("No valid move found")
+            print(f"Total containers that were late: {len(existing_late)}")
+            print(f"Late container IDs: {sorted(list(existing_late))}")
             safe_write_move("bestmove.txt", "5 5")
 
     except Exception as e:
