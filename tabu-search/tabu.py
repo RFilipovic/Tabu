@@ -303,6 +303,15 @@ def main():
             late_info = {"count": 0, "containers": []}
             existing_late = set()
 
+        # Load previous move's destination stack
+        last_to_stack = None
+        if os.path.exists("bestmove.txt"):
+            with open("bestmove.txt", 'r') as f:
+                last_move = f.read().strip().split()
+                if len(last_move) == 2:
+                    reverse_map = {0: "A0", 1: "B0", 2: "B1", 3: "B2", 4: "H0"}
+                    last_to_stack = reverse_map.get(int(last_move[1]))
+
         with open("state.json", 'r') as f:
             state_data = json.load(f)
         state = State(state_data["stacks"], state_data["containers"])
@@ -332,6 +341,20 @@ def main():
         move, new_state = ts.find_best_move(state)
 
         if move is not None:
+            # Check if trying to pick from stack where we just placed
+            if last_to_stack and move[0] == last_to_stack:
+                # Try to find alternative move
+                alternative_moves = []
+                for alt_move in ts.generate_random_moves(state, num_moves=10):
+                    if (alt_move[0] != last_to_stack and 
+                        not ts.is_tabu(alt_move) and
+                        state.stack_contents[alt_move[0]][-1].id != ts.last_moved_container):
+                        alternative_moves.append(alt_move)
+                
+                if alternative_moves:
+                    move = random.choice(alternative_moves)
+                    new_state = ts.apply_move(state, move)
+
             stack_map = {"A0": 0, "B0": 1, "B1": 2, "B2": 3, "H0": 4}
             try:
                 move_str = f"{stack_map[move[0]]} {stack_map[move[1]]}"
