@@ -30,7 +30,6 @@ class State:
         self.last_moved_container = None
         self.late_containers = set()
         
-        # Load the last moved container if it exists in state data
         if isinstance(containers, dict) and "last_moved_container" in containers:
             self.last_moved_container = containers["last_moved_container"]
         
@@ -67,7 +66,7 @@ class State:
         return {
             "stacks": self.stacks,
             "containers": containers,
-            "last_moved_container": self.last_moved_container  # Add this line
+            "last_moved_container": self.last_moved_container
         }
 
 class TabuSearch:
@@ -177,7 +176,7 @@ class TabuSearch:
             containers = current_state.stack_contents[stack]
             if containers and containers[-1].total_seconds() < 0:
                 top_container = containers[-1]
-                if top_container.id != self.last_moved_container:  # Check if it's not the same container
+                if top_container.id != self.last_moved_container:
                     move = (stack, "H0")
                     self.last_moved_container = top_container.id
                     return move, self.apply_move(current_state, move)
@@ -189,10 +188,9 @@ class TabuSearch:
 
         for move in moves:
             if not self.is_tabu(move):
-                # Check if we're trying to move the same container
                 from_stack = move[0]
                 top_container = current_state.stack_contents[from_stack][-1]
-                if top_container.id != self.last_moved_container:  # Add this check
+                if top_container.id != self.last_moved_container:
                     new_state = self.apply_move(current_state, move)
                     score = self.look_ahead(new_state, self.look_ahead_depth)
                     if score < best_score:
@@ -204,7 +202,6 @@ class TabuSearch:
             non_tabu_moves = [m for m in moves if not self.is_tabu(m)]
             valid_moves = []
             
-            # Filter moves that would move the same container
             for move in non_tabu_moves:
                 from_stack = move[0]
                 top_container = current_state.stack_contents[from_stack][-1]
@@ -214,7 +211,6 @@ class TabuSearch:
             if valid_moves:
                 best_move = random.choice(valid_moves)
             else:
-                # If no valid moves, clear everything and try again
                 self.tabu_list.clear()
                 self.last_moved_container = None
                 best_move = random.choice(moves)
@@ -228,7 +224,6 @@ class TabuSearch:
         return best_move, best_state
     
 def safe_write_json(file_path: str, data):
-    """Atomically write JSON file"""
     temp_path = file_path + ".tmp"
     try:
         with open(temp_path, 'w') as f:
@@ -237,7 +232,7 @@ def safe_write_json(file_path: str, data):
             os.fsync(f.fileno())
         os.replace(temp_path, file_path)
     except Exception as e:
-        print(f"Error writing {file_path}: {e}", file=sys.stderr)
+        print(f"Greška pri pisanju {file_path}: {e}", file=sys.stderr)
         if os.path.exists(temp_path):
             os.remove(temp_path)
         raise
@@ -269,7 +264,6 @@ def parse_ulaz_times(ulaz_path="../simulator/ulaz.txt"):
         return times
 
 def safe_write_move(file_path: str, content: str):
-    """Atomically write move file"""
     temp_path = file_path + ".tmp"
     try:
         with open(temp_path, 'w') as f:
@@ -278,7 +272,7 @@ def safe_write_move(file_path: str, content: str):
             os.fsync(f.fileno())
         os.replace(temp_path, file_path)
     except Exception as e:
-        print(f"Error writing move file: {e}", file=sys.stderr)
+        print(f"Greška pri pisanju datoteke s potezom: {e}", file=sys.stderr)
         if os.path.exists(temp_path):
             os.remove(temp_path)
         with open(file_path, 'w') as f:
@@ -288,13 +282,12 @@ def safe_write_move(file_path: str, content: str):
 def main():
     try:
         if not os.path.exists("state.json"):
-            raise FileNotFoundError("state.json missing")
+            raise FileNotFoundError("state.json nije pronađen")
             
         if not os.path.exists("tabu_list.json"):
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
 
-        # Load existing late containers data or create new
         if os.path.exists("late_containers.json"):
             with open("late_containers.json", 'r') as f:
                 late_info = json.load(f)
@@ -303,7 +296,6 @@ def main():
             late_info = {"count": 0, "containers": []}
             existing_late = set()
 
-        # Load previous move's destination stack
         last_to_stack = None
         if os.path.exists("bestmove.txt"):
             with open("bestmove.txt", 'r') as f:
@@ -320,7 +312,6 @@ def main():
             tabu_data = json.load(f)
         tabu_data["tabu_moves"] = [tuple(m) for m in tabu_data.get("tabu_moves", [])]
 
-        # Add any new late containers to existing ones
         existing_late.update(state.late_containers)
         late_info = {
             "count": len(existing_late),
@@ -329,9 +320,9 @@ def main():
         safe_write_json("late_containers.json", late_info)
 
         if tabu_data["iterations"] >= 100:
-            print("Resetting tabu list after 100 iterations")
-            print(f"Total containers that were late: {len(existing_late)}")
-            print(f"Late container IDs: {sorted(list(existing_late))}")
+            print("Resetiranje tabu liste nakon 100 iteracija")
+            print(f"Ukupno kasnih kontejnera: {len(existing_late)}")
+            print(f"ID-evi kasnih kontejnera: {sorted(list(existing_late))}")
             tabu_data = {"iterations": 0, "tabu_moves": []}
             safe_write_json("tabu_list.json", tabu_data)
             safe_write_move("bestmove.txt", "5 5")
@@ -341,9 +332,7 @@ def main():
         move, new_state = ts.find_best_move(state)
 
         if move is not None:
-            # Check if trying to pick from stack where we just placed
             if last_to_stack and move[0] == last_to_stack:
-                # Try to find alternative move
                 alternative_moves = []
                 for alt_move in ts.generate_random_moves(state, num_moves=10):
                     if (alt_move[0] != last_to_stack and 
@@ -359,12 +348,11 @@ def main():
             try:
                 move_str = f"{stack_map[move[0]]} {stack_map[move[1]]}"
             except KeyError as e:
-                print(f"Invalid stack in move: {move}", file=sys.stderr)
-                raise ValueError(f"Invalid stack name in move {move}")
+                print(f"Nevažeći stog u potezu: {move}", file=sys.stderr)
+                raise ValueError(f"Nevažeći naziv stoga u potezu {move}")
 
             safe_write_move("bestmove.txt", move_str)
             
-            # Update late containers by adding new ones to existing set
             existing_late.update(new_state.late_containers)
             late_info = {
                 "count": len(existing_late),
@@ -372,7 +360,7 @@ def main():
             }
             safe_write_json("late_containers.json", late_info)
             
-            print(f"Total containers that have been late: {len(existing_late)}")
+            print(f"Ukupno kontejnera koji su kasnili: {len(existing_late)}")
             safe_write_json("state.json", new_state.to_dict())
             
             ts.add_to_tabu(move)
@@ -380,13 +368,13 @@ def main():
             tabu_data["iterations"] += 1
             safe_write_json("tabu_list.json", tabu_data)
         else:
-            print("No valid move found")
-            print(f"Total containers that were late: {len(existing_late)}")
-            print(f"Late container IDs: {sorted(list(existing_late))}")
+            print("Nije pronađen valjani potez")
+            print(f"Ukupno kasnih kontejnera: {len(existing_late)}")
+            print(f"ID-evi kasnih kontejnera: {sorted(list(existing_late))}")
             safe_write_move("bestmove.txt", "5 5")
 
     except Exception as e:
-        print(f"Critical error in main: {e}", file=sys.stderr)
+        print(f"Kritična greška u glavnom programu: {e}", file=sys.stderr)
         if not os.path.exists("tabu_list.json"):
             with open("tabu_list.json", 'w') as f:
                 json.dump({"iterations": 0, "tabu_moves": []}, f)
