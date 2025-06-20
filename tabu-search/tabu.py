@@ -181,40 +181,40 @@ class TabuSearch:
                     self.last_moved_container = top_container.id
                     return move, self.apply_move(current_state, move)
 
-        moves = self.generate_random_moves(current_state, num_moves=5)
+        moves = self.generate_random_moves(current_state, num_moves=10)
         best_move = None
         best_state = None
-        best_score = float('inf')
+        best_score = float("inf")
 
         for move in moves:
-            if not self.is_tabu(move):
-                from_stack = move[0]
-                top_container = current_state.stack_contents[from_stack][-1]
-                if top_container.id != self.last_moved_container:
-                    new_state = self.apply_move(current_state, move)
-                    score = self.look_ahead(new_state, self.look_ahead_depth)
-                    if score < best_score:
-                        best_score = score
-                        best_move = move
-                        best_state = new_state
+            from_stack = move[0]
+            top_container = current_state.stack_contents[from_stack][-1]
+            if top_container.id == self.last_moved_container:
+                continue
+            new_state = self.apply_move(current_state, move)
+            score = self.look_ahead(new_state, self.look_ahead_depth)
+            if self.is_tabu(move) and score >= self.evaluate_state(current_state):
+                continue
+            if score < best_score:
+                best_score = score
+                best_move = move
+                best_state = new_state
 
         if best_move is None and moves:
-            non_tabu_moves = [m for m in moves if not self.is_tabu(m)]
             valid_moves = []
-            
-            for move in non_tabu_moves:
+            for move in moves:
                 from_stack = move[0]
                 top_container = current_state.stack_contents[from_stack][-1]
                 if top_container.id != self.last_moved_container:
                     valid_moves.append(move)
-                    
+
             if valid_moves:
                 best_move = random.choice(valid_moves)
             else:
                 self.tabu_list.clear()
                 self.last_moved_container = None
                 best_move = random.choice(moves)
-                
+
             best_state = self.apply_move(current_state, best_move)
 
         if best_move:
